@@ -20,7 +20,8 @@ function d_q = DPCM(m,orden,a_n)
     end
 end
 
-function [q,error] = Cuantizar(y,n_bits,mp)
+%
+function [q,error,SNR] = Cuantizar(y,n_bits,mp)
     
     L = 2^n_bits; 
     delta = 2*mp/L;
@@ -32,10 +33,30 @@ function [q,error] = Cuantizar(y,n_bits,mp)
         [minimo, idx] = min(dif);  
         q(i) = niveles(idx); 
 
+        SNR(i) = 10*log10((y(i)^2)/(mp^2/(3*(n_bits)^2))); 
         error(i) = abs(y(i) - q(i));
     end
 end
-%demodulacion DPCM
+
+
+% function [q,error] = Cuantizar(y,n_bits,mp)
+% 
+%     L = 2^n_bits; 
+%     delta = 2*mp/L;
+%     e = delta/2; 
+%     niveles = -mp + e : delta : mp - e; 
+% 
+%     for i = 1:length(y)
+%         dif = abs(y(i) - niveles); 
+%         [minimo, idx] = min(dif);  
+%         q(i) = niveles(idx); 
+% 
+%         error(i) = abs(y(i) - q(i));
+%     end
+% end
+
+
+%demodulacion DPCM 
 function m = DPCD(d_q, orden, a_n)
     k = orden + 1;
     m = zeros(1, length(d_q));
@@ -67,12 +88,12 @@ m = A*sin(2*pi*f*t);
 senalDPCM_plana = DPCM(m,3,[0.7071,0.5,0.25]);
 
 %----------CUANTIZACION
-mp = max(senalDPCM_plana);
+mp = max(senalDPCM_plana); %dado que DPCM contrae la senal, se recalcula el maximo de la senal
 disp(mp);
-cantidad_bits = 8;
+cantidad_bits = 4;
 
 %la senalDPCM_cuantizada corresponde a la TX
-[senalDPCM_cuantizada,error] = Cuantizar(senalDPCM_plana,cantidad_bits,mp);
+[senalDPCM_cuantizada,error,SNR] = Cuantizar(senalDPCM_plana,cantidad_bits,mp);
 
 %****** RECEPTOR
 
