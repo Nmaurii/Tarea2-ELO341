@@ -6,6 +6,23 @@ clc;
 clear all;
 close all;
 
+function [q,error,SNR] = Cuantizar(y,n_bits,mp)
+    
+    L = 2^n_bits; 
+    delta = 2*mp/L;
+    e = delta/2; 
+    niveles = -mp + e : delta : mp - e; 
+
+    for i = 1:length(y)
+        dif = abs(y(i) - niveles); 
+        [minimo, idx] = min(dif);  
+        q(i) = niveles(idx); 
+
+        SNR(i) = 10*log10((y(i)^2)/(mp^2/(3*(n_bits)^2))); 
+        error(i) = abs(y(i) - q(i));
+    end
+end
+
 %----------------ETAPA 1 DE SAMPLEO
 
 f = 1000; % frecuancia de senal banda base 1000 Hz
@@ -26,34 +43,13 @@ y = A*sin(2*pi*f*t);
 %-----------------ETAPA 2 DE CUANTIZACION
 
 n_bits = 3;
-L = 2^n_bits; %vendria siendo el L en 2mp/L que nos da la cantidad de niveles.
-delta = 2*A/L;%delta es la separacin enter niveles.
-e = delta/2; %epsilon es el error medio 
-
 %se define los arrays error y vector_pcm que almacena datos de cuantizacion
-error = [];
-vector_pcm = [];
-SNR_valores = [];
+
 %S Y N de senal
 p_senal = mean(y.^2);
-p_ruido = A^2/(3*L^2);
+p_ruido = A^2/(3*(n_bits)^2);
 
-niveles = -A + delta/2 : delta : A- delta/2; 
-
-% senal cuantizada
-vector_pcm = zeros(size(y));
-
-for i = 1:length(y)
-
-    dif = abs(y(i) - niveles); 
-    [minimo, idx] = min(dif);  
-    vector_pcm(i) = niveles(idx); 
-
-    error(i) = abs(y(i) - vector_pcm(i));
-    SNR_valores(i) = 10*log10((y(i)^2)/p_ruido); 
-
-end
-
+[vector_pcm,error,SNR_valores] = Cuantizar(y,n_bits,A);
 
 SNR = 10*log10(p_senal/p_ruido);
 disp(y(1999));
@@ -76,7 +72,7 @@ grid on;
 xlim([0, T]);
 
 
-%SNR senal seno.
+%SNR de senal seno banda base.
 figure(2);
 plot(t, SNR*ones(1, length(t)), 'b-', 'DisplayName', 'SNR '); % Línea horizontal
 hold on;
