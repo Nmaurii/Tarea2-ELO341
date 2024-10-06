@@ -40,7 +40,7 @@ p_ruido = A^2/(3*L^2);
 
 niveles = -A + delta/2 : delta : A- delta/2; 
 
-% Inicializar la señal cuantizada
+% senal cuantizada
 vector_pcm = zeros(size(y));
 
 for i = 1:length(y)
@@ -76,7 +76,7 @@ grid on;
 xlim([0, T]);
 
 
-%SNR de senal seno banda base.
+%SNR senal seno.
 figure(2);
 plot(t, SNR*ones(1, length(t)), 'b-', 'DisplayName', 'SNR '); % Línea horizontal
 hold on;
