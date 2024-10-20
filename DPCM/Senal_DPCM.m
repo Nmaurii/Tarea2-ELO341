@@ -27,7 +27,7 @@ function d_q = DPCM(m, orden, a_n, n_bits, mp)
     for i = k:length(m)
         prediccion = a_n(1) * m_q(i-1) + a_n(2) * m_q(i-2) + a_n(3) * m_q(i-3);
         d_q(i) = Cuantizar(m(i) - prediccion, n_bits, mp);
-        m_q(i) = prediccion + d_q(i); % reconstrucción correcta en el transmisor
+        m_q(i) = prediccion + d_q(i); 
     end
 end
 
@@ -40,7 +40,7 @@ function m = DPCD(d_q, orden, a_n)
     for i = k:length(d_q)
         % predicción usando los coeficientes a_n
         prediccion = a_n(1) * m_q(i-1) + a_n(2) * m_q(i-2) + a_n(3) * m_q(i-3);
-        m_q(i) = prediccion + d_q(i); % reconstrucción en el receptor
+        m_q(i) = prediccion + d_q(i); 
         m(i) = m_q(i); % senal demodulada
     end
 end
