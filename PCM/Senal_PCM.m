@@ -1,87 +1,58 @@
-%Tarea 2 Teoria de cominicaciones digitales.
-
-%Nicolas Vergara Fecha 02/10/2024
+% Tarea 2 Teoria de comunicaciones digitales.
+% Nicolas Vergara Fecha 02/10/2024
 
 clc;
 clear all;
 close all;
 
-function [q,error,SNR] = Cuantizar(y,n_bits,mp)
-    
+function [senal_cuantizada, error] = Cuantizar(senal, n_bits, mp)
     L = 2^n_bits; 
-    delta = 2*mp/L;
-    e = delta/2; 
+    delta = 2 * mp / L;
+    e = delta / 2; 
     niveles = -mp + e : delta : mp - e; 
 
-    for i = 1:length(y)
-        dif = abs(y(i) - niveles); 
-        [minimo, idx] = min(dif);  
-        q(i) = niveles(idx); 
-
-        SNR(i) = 10*log10((y(i)^2)/(mp^2/(3*(n_bits)^2))); 
-        error(i) = abs(y(i) - q(i));
+    for i = 1:length(senal)
+        dif = abs(senal(i) - niveles); 
+        [~, idx] = min(dif);  
+        senal_cuantizada(i) = niveles(idx); 
+        error(i) = abs(senal(i) - senal_cuantizada(i));
     end
 end
 
 %----------------ETAPA 1 DE SAMPLEO
-
-f = 1000; % frecuancia de senal banda base 1000 Hz
+f = 1000; % Frecuencia de la señal banda base 1000 Hz
 n_muestras = 1000;
-fs = 2*f*n_muestras; % frecuencia de muestreo (Nyquist)
+fs = 2 * f * n_muestras; % Frecuencia de muestreo (Nyquist)
 
-T = 1/f; % periodo de un ciclo
-N = (T*fs); %cantidad de muestas
+T = 1 / f; % Periodo de un ciclo
+N = (T * fs); % Cantidad de muestras
 
-t = linspace(0,T,N);%intervalo de valores.
+t = linspace(0, T, N); % Intervalo de valores
+A = 1; % Amplitud
+senal_moduladora = A * sin(2 * pi * f * t);
 
-% senal banda base a modular sampleada
-A = 1;%amplitud
-y = A*sin(2*pi*f*t);
+%----------------ETAPA 3 ANALISIS DE SNR
+n_bits_range = 3:5; % intervalor de profundidad de bits
+snr_empirica = zeros(size(n_bits_range));
+snr_teorica = 6.02 * n_bits_range + 1.76; % formula para SNR teórica
+mp = A; % maximo  de la señal moduladora
 
+for idx = 1:length(n_bits_range)
 
+    n_bits = n_bits_range(idx);
+    [vector_pcm, error] = Cuantizar(senal_moduladora, n_bits, mp);
+    potencia_senal = mean(senal_moduladora .^ 2);
+    potencia_ruido = mean((vector_pcm - senal_moduladora) .^ 2); 
+    snr_empirica(idx) = 10 * log10(potencia_senal / potencia_ruido); %snr empiroco
 
-%-----------------ETAPA 2 DE CUANTIZACION
-
-n_bits = 3;
-%se define los arrays error y vector_pcm que almacena datos de cuantizacion
-
-%S Y N de senal
-p_senal = mean(y.^2);
-p_ruido = A^2/(3*(n_bits)^2);
-
-[vector_pcm,error,SNR_valores] = Cuantizar(y,n_bits,A);
-
-SNR = 10*log10(p_senal/p_ruido);
-disp(y(1999));
-
-
-%********Grafica
-
-figure(1);
-
-plot(t, y, '.-', 'DisplayName', 'Señal Sampleada'); 
+end
+figure;
+plot(n_bits_range, snr_teorica, '-o', 'LineWidth', 2, 'DisplayName', 'SNR Teórica (dB)');
 hold on;
-plot(t, vector_pcm, 'r--', 'DisplayName', 'Señal Cuantizada'); 
-plot(t, error, '-', 'DisplayName', 'Error'); 
-hold off;
-
-xlabel('Tiempo 1[ms]');
-title('Señal de 1000 Hz y Señal Cuantizada');
+plot(n_bits_range, snr_empirica, '-x', 'LineWidth', 2, 'DisplayName', 'SNR Empírica (dB)');
+xlabel('Profundidad de Bits');
+ylabel('SNR (dB)');
+title('SNR Teórica y Empírica para profundidades de bits de 3 a 5');
 legend('show');
 grid on;
-xlim([0, T]);
 
-
-%SNR de senal seno banda base.
-figure(2);
-plot(t, SNR*ones(1, length(t)), 'b-', 'DisplayName', 'SNR '); % Línea horizontal
-hold on;
-plot(t(1:1999), SNR_valores(1:1999), '-', 'DisplayName', 'SNR'); 
-hold off;
-
-xlabel('Tiempo 1[ms]');
-ylabel('db');
-title('SNR');
-legend('show');
-grid on;
-xlim([0, T]);
