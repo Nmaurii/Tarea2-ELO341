@@ -27,7 +27,7 @@ function d_q = DPCM(m, orden, a_n, n_bits, mp)
     for i = k:length(m)
         prediccion = a_n(1) * m_q(i-1) + a_n(2) * m_q(i-2) + a_n(3) * m_q(i-3);
         d_q(i) = Cuantizar(m(i) - prediccion, n_bits, mp);
-        m_q(i) = prediccion + d_q(i); 
+        m_q(i) = prediccion + d_q(i); % reconstrucción correcta en el transmisor
     end
 end
 
@@ -40,7 +40,7 @@ function m = DPCD(d_q, orden, a_n)
     for i = k:length(d_q)
         % predicción usando los coeficientes a_n
         prediccion = a_n(1) * m_q(i-1) + a_n(2) * m_q(i-2) + a_n(3) * m_q(i-3);
-        m_q(i) = prediccion + d_q(i); 
+        m_q(i) = prediccion + d_q(i); % reconstrucción en el receptor
         m(i) = m_q(i); % senal demodulada
     end
 end
@@ -50,36 +50,35 @@ end
 %----------SAMPLEO
 f = 1000; % Frecuencia de señal banda base 1000 Hz
 n_muestras = 1000;
-fs = f * n_muestras; % Frecuencia de muestreo para 1000 muestras por ciclo
+fs = 2*f*n_muestras; % Frecuencia de muestreo para 1000 muestras por ciclo
 
 T = 1 / f; % Periodo de un ciclo
 N = round(T * fs); % Cantidad de muestras
 
 t = linspace(0, T, N); % Intervalo de valores.
 
-% Señal a modular
+% Senal moduladora
 A = 1; % Amplitud
-m = A * sin(2 * pi * f * t);
+moduladora = A * sin(2 * pi * f * t);
 
 %----------CUANTIZACION
 cantidad_bits = 3;
 
 %---------MODULACION DPCM
-senalDPCM_plana = DPCM(m, 3, [0.7071, 0.5, 0.25], cantidad_bits, A);
+senalDPCM = DPCM(moduladora, 3, [0.7071, 0.5, 0.25], cantidad_bits, A);
 
-%****** RECEPTOR
-senal_demodulada = DPCD(senalDPCM_plana, 3, [0.7071, 0.5, 0.25]);
+%*******RECEPTOR
+senal_demodulada = DPCD(senalDPCM, 3, [0.7071, 0.5, 0.25]);
 
 %********Grafica
 
-figure(1);
-plot(t, m, 'r--', 'DisplayName','Señal'); 
+figure;
+plot(t, moduladora, 'r-', 'DisplayName','Señal m[k]'); 
 hold on;
-plot(t, senalDPCM_plana, 'b-', 'DisplayName', 'Senal Modulada'); 
+plot(t, senalDPCM, 'b-', 'DisplayName', 'Señal dq[k]'); 
 
-plot(t, senal_demodulada, '-', 'DisplayName', 'Señal Demodulada');
+plot(t, senal_demodulada, 'y-', 'DisplayName', 'Señal mqr[k]');
 hold off;
-
 
 
 xlabel('tiempo [s]');
