@@ -74,7 +74,7 @@ for idx = 1:length(bit_values)
     sigma_X = var(moduladora); % Varianza de la señal original
 
     % Varianza del error de predicción
-    error_prediccion = moduladora - [0, senal_demodulada(1:end-1)]; % Error de predicción
+    error_prediccion = moduladora - senal_demodulada; % Error de prediccion
     sigma_E = var(error_prediccion); % Varianza del error de predicción
     sigma_D = var(senalDPCM); % varianza de la señal DPCM
 
