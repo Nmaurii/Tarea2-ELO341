@@ -1,3 +1,4 @@
+
 function [valor_cuantizado, error] = Cuantizardor(valor, n_bits, mp)
     L = 2^n_bits; % número de niveles
     delta = 2 * mp / L; % tamaño de cada nivel
@@ -52,53 +53,46 @@ moduladora = A * sin(2 * pi * f * t);
 
 % Valores de bits de 3 a 8
 bit_values = 3:8;
-SNR_results = zeros(1, length(bit_values));
-SNR_teorico = zeros(1, length(n_bits));
+SNR_teorico = zeros(1, length(bit_values));
+SNR_empirico = zeros(1, length(n_bits));
 
 for idx = 1:length(bit_values)
-    cantidad_bits = bit_values(idx);
 
-    %---------MODULACION DPCM
+    cantidad_bits = bit_values(idx);
+    %--------- DPCM
     senalDPCM = DPCM(moduladora, 3, [0.7071, 0.5, 0.25], cantidad_bits, A);
 
     %*******RECEPTOR
     senal_demodulada = DPCMD(senalDPCM, 3, [0.7071, 0.5, 0.25]);
 
     %******* SNR
-    % Error de cuantización para DPCM
-    error_cuantizacion = abs(moduladora - senal_demodulada); % Error entre la senal original y la demodulada
-    sigma_Q_DPCM = var(error_cuantizacion); % Varianza del error de cuantizacion
+    % Error de cuantizacion para DPCM
+    error_cuantizacion = abs(moduladora - senal_demodulada); % Error entre la señal original y la demodulada
+    sigma_Q_DPCM = var(error_cuantizacion); % Varianza del error de cuantización
 
     % Varianza de la senal original
-    sigma_X = var(moduladora); % Varianza de la senal original
+    sigma_X = var(moduladora); % Varianza de la señal original
 
-    % Varianza del error de prediccion
-    error_prediccion = moduladora - [0, senal_demodulada(1:end-1)]; % Error de prediccion
-    sigma_E = var(error_prediccion); % Varianza del error de prediccion
+    % Varianza del error de predicción
+    error_prediccion = moduladora - [0, senal_demodulada(1:end-1)]; % Error de predicción
+    sigma_E = var(error_prediccion); % Varianza del error de predicción
+    sigma_D = var(senalDPCM); % varianza de la señal DPCM
 
-    % Calculo de SNR
-    G_P = sigma_X^2 / sigma_E^2; % Ganancia de predicción
-    SNR_P = sigma_E^2 / sigma_Q_DPCM; % SNR para el cuantizador
-    SNR_Q = (sigma_X^2 / sigma_Q_DPCM) * SNR_P; % SNR total
+    % SNR
+    ganancia= sigma_X^2 / sigma_Q_DPCM; % ganancia de predicción
+    SNR_Q = (sigma_X^2 / sigma_Q_DPCM) * (sigma_Q_DPCM / sigma_D); % SNR total
 
-    % Almacenar el resultado
-    SNR_results(idx) = 10 * log10(SNR_Q * G_P); % Guardar en dB
-    SNR_teorico(idx) = 6.02 * cantidad_bits + 10 * log10(sigma_X / sigma_Q_DPCM) + 1.76; % SNR teorico
-
-end
-
-% Mostrar resultados
-for idx = 1:length(bit_values)
-    fprintf('SNR DPCM para %d bits: %.2f dB\n', bit_values(idx), SNR_results(idx));
+    SNR_empirico(idx) = 10 * log10(SNR_Q * ganancia); % Guardar en dB
+    SNR_teorico(idx) = 6.02 * cantidad_bits + 10 * log10(sigma_X / sigma_D) + 1.76; % SNR teorico
 end
 
 figure;
 hold on;
-plot(bit_values, SNR_results, 'o-', 'DisplayName', 'SNR Experimental');
+plot(bit_values, SNR_empirico, 'o-', 'DisplayName', 'SNR Experimental');
 plot(bit_values, SNR_teorico, 'x--', 'DisplayName', 'SNR Teórico');
-xlabel('Numero de Bits');
+xlabel('Número de Bits');
 ylabel('SNR (dB)');
-title('Comparación de SNR Experimental y Teorico en DPCM');
+title('Comparación de SNR Experimental y Teórico en DPCM');
 legend;
 grid on;
 hold off;
